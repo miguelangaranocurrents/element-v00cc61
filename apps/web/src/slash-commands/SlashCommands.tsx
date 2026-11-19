@@ -22,6 +22,7 @@ import {
 import { logger } from "matrix-js-sdk/src/logger";
 import { KnownMembership, type RoomMemberEventContent } from "matrix-js-sdk/src/types";
 import { LinkedText } from "@element-hq/web-shared-components";
+import escapeHtml from "escape-html";
 
 import dis from "../dispatcher/dispatcher";
 import { _t, _td, UserFriendlyError } from "../languageHandler";
@@ -73,7 +74,10 @@ export const Commands = [
         args: "<message>",
         description: _td("slash_command|spoiler"),
         runFn: function (cli, roomId, threadId, message = "") {
-            return successSync(ContentHelpers.makeHtmlMessage(message, `<span data-mx-spoiler>${message}</span>`));
+            // Render Markdown inside the spoiler (e.g. bold text) the same way a normal message is rendered.
+            // The serializer is typed as possibly returning undefined, so fall back to the escaped plain text.
+            const formatted = htmlSerializeFromMdIfNeeded(message, { forceHTML: true }) ?? escapeHtml(message);
+            return successSync(ContentHelpers.makeHtmlMessage(message, `<span data-mx-spoiler>${formatted}</span>`));
         },
         category: CommandCategories.messages,
     }),
